@@ -1,6 +1,16 @@
-import { Bell, LayoutDashboard, Leaf, Plane, Sprout } from "lucide-react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import {
+  Bell,
+  LayoutDashboard,
+  Leaf,
+  LogOut,
+  Plane,
+  Sprout,
+} from "lucide-react";
+import { useState } from "react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 
+import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -11,6 +21,22 @@ const navigation = [
 ];
 
 export function AppShell() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+    } catch {
+      // AuthProvider already cleared the local user, so leave the shell regardless.
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  }
+
   return (
     <div className="min-h-screen bg-surface-muted text-surface-inverse md:flex">
       <aside className="border-b border-white/10 bg-surface-inverse md:flex md:w-64 md:shrink-0 md:flex-col md:border-r md:border-b-0">
@@ -47,6 +73,24 @@ export function AppShell() {
             ))}
           </ul>
         </nav>
+        <div className="border-t border-white/10 px-3 py-3 md:px-5">
+          {user && (
+            <p className="truncate text-xs text-canopy-200">
+              Signed in as{" "}
+              <span className="font-medium text-white">{user.username}</span>
+            </p>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void handleLogout()}
+            disabled={isLoggingOut}
+            className="mt-2 w-full justify-start text-canopy-100 hover:bg-white/10 hover:text-white focus-visible:ring-canopy-400 focus-visible:ring-offset-surface-inverse"
+          >
+            <LogOut aria-hidden="true" className="size-4" />
+            Log out
+          </Button>
+        </div>
       </aside>
       <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-10">
         <Outlet />
