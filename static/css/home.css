@@ -1,0 +1,55 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7f2;
+  --ink: #1c2b1f;
+  --muted: #4d5c50;
+  --accent: #2f6b3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.site-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #d7e0d6;
+}
+
+.brand {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tagline {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.hero {
+  max-width: 42rem;
+  padding: 3rem 2rem;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  color: var(--accent);
+}
+
+p {
+  line-height: 1.6;
+}
+
+code {
+  font-size: 0.95em;
+}
