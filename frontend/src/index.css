@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* `static` emits every theme token, even when no utility references it. */
 @theme static {
   /* Green canopy palette */
   --color-canopy-50: #f2f8f2;
