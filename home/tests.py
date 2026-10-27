@@ -26,3 +26,35 @@ class SecurityConfigurationTests(TestCase):
 
     def test_session_cookie_is_not_readable_by_javascript(self):
         self.assertTrue(settings.SESSION_COOKIE_HTTPONLY)
+
+
+class SpaShellTests(TestCase):
+    def test_root_serves_spa_shell(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<div id="root"></div>')
+
+    def test_client_route_serves_spa_shell(self):
+        response = self.client.get("/fields")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<div id="root"></div>')
+
+    def test_api_health_is_not_swallowed(self):
+        response = self.client.get("/api/health/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "ok")
+
+    def test_unknown_api_path_is_not_swallowed(self):
+        self.assertEqual(self.client.get("/api/unknown/").status_code, 404)
+
+    def test_bare_admin_prefix_is_not_swallowed(self):
+        response = self.client.get("/admin")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, "/admin/")
+
+    def test_bare_api_prefix_is_not_swallowed(self):
+        # /api/ has no resolving pattern, so APPEND_SLASH cannot redirect;
+        # Django 404s instead. The shell must not be served either way.
+        response = self.client.get("/api")
+        self.assertEqual(response.status_code, 404)
+        self.assertNotContains(response, '<div id="root"></div>', status_code=404)
