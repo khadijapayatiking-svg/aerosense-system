@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme static {
+  /* Green canopy palette */
+  --color-canopy-50: #f2f8f2;
+  --color-canopy-100: #e0efe1;
+  --color-canopy-200: #c2dfc5;
+  --color-canopy-300: #96c69c;
+  --color-canopy-400: #64a86d;
+  --color-canopy-500: #3f8a4b;
+  --color-canopy-600: #2d6e39;
+  --color-canopy-700: #265830;
+  --color-canopy-800: #21462a;
+  --color-canopy-900: #1c3a24;
+  --color-canopy-950: #0d2013;
+
+  /* Earth palette */
+  --color-earth-50: #faf7f2;
+  --color-earth-100: #f1e9dc;
+  --color-earth-200: #e3d3ba;
+  --color-earth-300: #d0b58e;
+  --color-earth-400: #bd9768;
+  --color-earth-500: #b0814f;
+  --color-earth-600: #996a43;
+  --color-earth-700: #7d5339;
+  --color-earth-800: #674534;
+  --color-earth-900: #563a2d;
+  --color-earth-950: #2f1e16;
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f6f1;
+  --color-surface-sunken: #eeece3;
+  --color-surface-inverse: #14251a;
+  --color-border-subtle: #dedbd0;
+  --color-border-strong: #c4c0b1;
+
+  /* Radii */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Sora", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
