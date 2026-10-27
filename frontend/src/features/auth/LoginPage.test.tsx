@@ -56,15 +56,16 @@ async function submitCredentials(password = "secret") {
 }
 
 describe("LoginPage", () => {
-  it("shows an inline error when login fails", async () => {
+  it("shows the generic fallback for a non-Axios error", async () => {
     const login = vi.fn().mockRejectedValue(new Error("Invalid credentials"));
 
     renderLoginPage(login);
     await submitCredentials("wrong");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /invalid credentials/i,
+      "Unable to sign in. Check your credentials and try again.",
     );
+    expect(screen.queryByText(/invalid credentials/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/username/i)).toHaveValue("demo");
   });
 
@@ -82,6 +83,37 @@ describe("LoginPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Invalid credentials.",
+    );
+  });
+
+  it("does not surface a server message from a 5xx response", async () => {
+    const login = vi.fn().mockRejectedValue({
+      isAxiosError: true,
+      response: { status: 500, data: { detail: "Internal server error" } },
+    });
+
+    renderLoginPage(login);
+    await submitCredentials();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Unable to sign in. Check your credentials and try again.",
+    );
+    expect(
+      screen.queryByText(/internal server error/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the generic fallback for a network error", async () => {
+    const login = vi.fn().mockRejectedValue({
+      isAxiosError: true,
+      response: undefined,
+    });
+
+    renderLoginPage(login);
+    await submitCredentials();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Unable to sign in. Check your credentials and try again.",
     );
   });
 
@@ -105,6 +137,20 @@ describe("LoginPage", () => {
     expect(await screen.findByTestId("location")).toHaveTextContent(
       "/fields?crop=maize#plots",
     );
+  });
+
+  it("rejects a protocol-relative redirect target", async () => {
+    const login = vi.fn().mockResolvedValue(demoUser);
+
+    renderLoginPage(login, [
+      {
+        pathname: "/login",
+        state: { from: { pathname: "//evil.com" } },
+      },
+    ]);
+    await submitCredentials();
+
+    expect(await screen.findByTestId("location")).toHaveTextContent(/^\/$/);
   });
 
   it("navigates to the dashboard after login without a redirect target", async () => {

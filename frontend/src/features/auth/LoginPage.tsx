@@ -22,28 +22,46 @@ interface RedirectLocation {
   hash?: string;
 }
 
+const genericLoginError =
+  "Unable to sign in. Check your credentials and try again.";
+
 function getLoginErrorMessage(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as
-      { detail?: unknown; non_field_errors?: unknown } | undefined;
-
-    if (typeof data?.detail === "string" && data.detail.trim()) {
-      return data.detail;
-    }
-
-    if (
-      Array.isArray(data?.non_field_errors) &&
-      typeof data.non_field_errors[0] === "string"
-    ) {
-      return data.non_field_errors[0];
-    }
+  if (!axios.isAxiosError(error)) {
+    return genericLoginError;
   }
 
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
+  const status = error.response?.status;
+  if (status === undefined || status < 400 || status >= 500) {
+    return genericLoginError;
   }
 
-  return "Unable to sign in. Check your credentials and try again.";
+  const data = error.response?.data as
+    { detail?: unknown; non_field_errors?: unknown } | undefined;
+
+  if (typeof data?.detail === "string" && data.detail.trim()) {
+    return data.detail;
+  }
+
+  if (
+    Array.isArray(data?.non_field_errors) &&
+    typeof data.non_field_errors[0] === "string"
+  ) {
+    return data.non_field_errors[0];
+  }
+
+  return genericLoginError;
+}
+
+function getRedirectTarget(from: RedirectLocation | undefined): string {
+  if (
+    from &&
+    from.pathname.startsWith("/") &&
+    !from.pathname.startsWith("//")
+  ) {
+    return `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
+  }
+
+  return "/";
 }
 
 export function LoginPage() {
@@ -62,9 +80,7 @@ export function LoginPage() {
   });
 
   const from = (location.state as { from?: RedirectLocation } | null)?.from;
-  const redirectTo = from
-    ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
-    : "/";
+  const redirectTo = getRedirectTarget(from);
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);

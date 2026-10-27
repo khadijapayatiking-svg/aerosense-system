@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -111,6 +111,27 @@ describe("AuthProvider", () => {
       password: "secret",
     });
     expect(await screen.findByText("demo")).toBeInTheDocument();
+  });
+
+  it("keeps a successful login when the mount lookup rejects late", async () => {
+    let rejectLookup: (reason?: unknown) => void = () => undefined;
+    const pendingLookup = new Promise<User>((_resolve, reject) => {
+      rejectLookup = reject;
+    });
+    vi.mocked(getCurrentUser).mockReturnValue(pendingLookup);
+    vi.mocked(loginRequest).mockResolvedValue(demoUser);
+
+    renderProvider();
+
+    await userEvent.click(screen.getByRole("button", { name: "log in" }));
+    expect(await screen.findByText("demo")).toBeInTheDocument();
+
+    rejectLookup(new Error("Network Error"));
+
+    await waitFor(() => {
+      expect(screen.queryByText("anonymous")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("demo")).toBeInTheDocument();
   });
 
   it("clears the user after logout", async () => {

@@ -42,6 +42,20 @@ def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+def validate_allowed_hosts(hosts: list[str], debug: bool) -> None:
+    """Reject unsafe ALLOWED_HOSTS values when running with DEBUG disabled."""
+    if debug:
+        return
+    if not hosts:
+        raise ImproperlyConfigured(
+            "DJANGO_ALLOWED_HOSTS must contain at least one host when DEBUG=False."
+        )
+    if any(host == "*" or host.startswith(".") for host in hosts):
+        raise ImproperlyConfigured(
+            "Wildcard DJANGO_ALLOWED_HOSTS is not allowed when DEBUG=False."
+        )
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "").strip()
 if not SECRET_KEY:
@@ -57,14 +71,7 @@ if len(SECRET_KEY) < 50:
 DEBUG = env_bool("DJANGO_DEBUG", False)
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
-if not DEBUG and not ALLOWED_HOSTS:
-    raise ImproperlyConfigured(
-        "DJANGO_ALLOWED_HOSTS must contain at least one host when DEBUG=False."
-    )
-if not DEBUG and "*" in ALLOWED_HOSTS:
-    raise ImproperlyConfigured(
-        "Wildcard DJANGO_ALLOWED_HOSTS is not allowed when DEBUG=False."
-    )
+validate_allowed_hosts(ALLOWED_HOSTS, DEBUG)
 
 CSRF_TRUSTED_ORIGINS = env_list(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
@@ -94,6 +101,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_CONTENT_NEGOTIATION_CLASS": (
+        "aerosense.negotiation.JSONOnlyContentNegotiation"
+    ),
 }
 
 MIDDLEWARE = [

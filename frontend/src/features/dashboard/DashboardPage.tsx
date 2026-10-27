@@ -81,7 +81,9 @@ export function DashboardPage() {
                   {severityLabel[alert.severity]}
                 </Badge>
                 <div className="min-w-0">
-                  <p className="text-sm text-surface-inverse">{alert.message}</p>
+                  <p className="text-sm text-surface-inverse">
+                    {alert.message}
+                  </p>
                   <p className="mt-0.5 text-xs text-earth-600">{alert.date}</p>
                 </div>
               </li>

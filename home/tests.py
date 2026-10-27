@@ -1,5 +1,10 @@
+import unittest
+
 from django.conf import settings
-from django.test import TestCase
+from django.core.exceptions import ImproperlyConfigured
+from django.test import SimpleTestCase, TestCase
+
+from aerosense.settings import validate_allowed_hosts
 
 
 class SecurityConfigurationTests(TestCase):
@@ -26,6 +31,27 @@ class SecurityConfigurationTests(TestCase):
 
     def test_session_cookie_is_not_readable_by_javascript(self):
         self.assertTrue(settings.SESSION_COOKIE_HTTPONLY)
+
+
+class AllowedHostsValidationTests(SimpleTestCase):
+    def test_debug_allows_wildcards(self):
+        validate_allowed_hosts(["*"], debug=True)
+        validate_allowed_hosts([".example.com"], debug=True)
+
+    def test_production_requires_at_least_one_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            validate_allowed_hosts([], debug=False)
+
+    def test_production_rejects_the_star_wildcard(self):
+        with self.assertRaises(ImproperlyConfigured):
+            validate_allowed_hosts(["*"], debug=False)
+
+    def test_production_rejects_leading_dot_wildcards(self):
+        with self.assertRaises(ImproperlyConfigured):
+            validate_allowed_hosts([".example.com"], debug=False)
+
+    def test_production_allows_explicit_hosts(self):
+        validate_allowed_hosts(["example.com", "localhost"], debug=False)
 
 
 class SpaShellTests(TestCase):
@@ -58,3 +84,18 @@ class SpaShellTests(TestCase):
         response = self.client.get("/api")
         self.assertEqual(response.status_code, 404)
         self.assertNotContains(response, '<div id="root"></div>', status_code=404)
+
+    # Django's test runner forces settings.DEBUG to False, so use the Vite
+    # dev-mode flag captured from the real configuration at import time.
+    @unittest.skipUnless(
+        not settings.DJANGO_VITE["default"]["dev_mode"]
+        and (settings.STATIC_ROOT / "frontend" / "manifest.json").exists(),
+        "requires a production build and collectstatic",
+    )
+    def test_shell_includes_hashed_frontend_assets(self):
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "/static/frontend/assets/")
+        self.assertContains(response, 'rel="stylesheet"')
+        self.assertContains(response, 'type="module"')

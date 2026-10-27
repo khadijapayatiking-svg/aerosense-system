@@ -16,7 +16,9 @@ export interface NdviTrendChartProps {
   data?: NdviPoint[];
 }
 
-export function NdviTrendChart({ data = sampleNdviTrend }: NdviTrendChartProps) {
+export function NdviTrendChart({
+  data = sampleNdviTrend,
+}: NdviTrendChartProps) {
   return (
     <Card className="p-5" data-testid="ndvi-chart">
       <div>

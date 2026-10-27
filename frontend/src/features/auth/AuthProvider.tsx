@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -30,24 +31,26 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authVersion = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+    const version = authVersion.current;
 
     async function loadCurrentUser() {
       try {
         const currentUser = await getCurrentUser();
 
-        if (!cancelled) {
+        if (!cancelled && authVersion.current === version) {
           setUser(currentUser);
         }
       } catch {
         // Anonymous visitors and failed session lookups are both unauthenticated.
-        if (!cancelled) {
+        if (!cancelled && authVersion.current === version) {
           setUser(null);
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && authVersion.current === version) {
           setIsLoading(false);
         }
       }
@@ -61,6 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
+    // Invalidate any in-flight mount lookup so a late response cannot undo login.
+    authVersion.current += 1;
+    setIsLoading(false);
+
     const currentUser = await loginRequest(credentials);
     setUser(currentUser);
 
@@ -68,6 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Invalidate any in-flight mount lookup so a late response cannot restore the user.
+    authVersion.current += 1;
+    setIsLoading(false);
+
     try {
       await logoutRequest();
     } finally {

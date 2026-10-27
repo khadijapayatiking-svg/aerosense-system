@@ -20,9 +20,14 @@ vi.mock("recharts", async (importOriginal) => {
 });
 
 describe("NdviTrendChart", () => {
-  it("renders the chart container", () => {
+  it("renders the chart heading, series, and legend", () => {
     render(<NdviTrendChart />);
 
     expect(screen.getByTestId("ndvi-chart")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Vegetation index trend" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("NDVI")).toBeInTheDocument();
+    expect(screen.getByText("NDRE")).toBeInTheDocument();
   });
 });
